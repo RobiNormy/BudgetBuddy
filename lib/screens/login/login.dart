@@ -1,9 +1,9 @@
 import 'package:budget_buddy/screens/all_screens.dart';
-import 'package:budget_buddy/screens/home/home.dart';
 import 'package:budget_buddy/screens/wallet/wallet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const String _privacyPolicyUrl =
@@ -86,6 +86,7 @@ class _LoginState extends State<Login> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 
@@ -97,6 +98,12 @@ class _LoginState extends State<Login> {
       if (isLogin) {
         String userEmail = _emailController.text.trim();
         String userPassword = _passwordController.text;
+        if (userEmail.isEmpty || userPassword.isEmpty) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Please enter email and password"))
+           );
+           return;
+        }
         await _auth.signInWithEmailAndPassword(
           email: userEmail,
           password: userPassword,
@@ -112,12 +119,20 @@ class _LoginState extends State<Login> {
         String userEmail = _emailController.text.trim();
         String userPassword = _passwordController.text;
         String username = _usernameController.text;
+        
+        if (userEmail.isEmpty || userPassword.isEmpty || username.isEmpty) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Please fill in all fields"))
+           );
+           return;
+        }
+
         if (!_isPasswordValid(userPassword)) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 _passwordRequirements(),
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
                 ),
@@ -131,44 +146,38 @@ class _LoginState extends State<Login> {
             password: userPassword,
           );
           await userCredential.user?.updateDisplayName(username);
+          
+          // Mark this as the first launch for the tutorial/wallet setup
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('is_first_launch', true);
+
           if (!mounted) return;
           FocusManager.instance.primaryFocus?.unfocus();
-          if (userCredential.additionalUserInfo?.isNewUser == true){
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              MyWallet.id,
-                  (route) => false,
-            );
-          }else {
-            Navigator.pushNamedAndRemoveUntil(context, HomeScreen.id, (route)=>false);
-        }
-
-
-
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            MyWallet.id,
+            (route) => false,
+          );
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       String message = "Something Went Wrong";
       if (e.code == "user-not-found") {
         message = "No user with that email";
-      }
-      if (e.code == "wrong-password") {
+      } else if (e.code == "wrong-password") {
         message = "Wrong password";
-      }
-      if (e.code == "invalid-credential") {
+      } else if (e.code == "invalid-credential") {
         message = "Invalid email or password";
-      }
-      if (e.code == "email-already-in-use") {
+      } else if (e.code == "email-already-in-use") {
         message = "Email already registered";
-      }
-      if (e.code == "weak-password") {
+      } else if (e.code == "weak-password") {
         message = "Password too weak";
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             message,
-            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
           ),
         ),
       );
@@ -184,34 +193,34 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0F1117),
+      backgroundColor: const Color(0xFF0F1117),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
               Center(
                 child: Container(
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Color(0XFF1A2035),
+                    color: const Color(0XFF1A2035),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Color(0xFF378ADD).withValues(alpha: 0.3),
+                      color: const Color(0xFF378ADD).withValues(alpha: 0.3),
                     ),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.credit_card,
                     color: Color(0XFF378ADD),
                     size: 30,
                   ),
                 ),
               ),
-              SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 16),
+              const Text(
                 "Budget Buddy",
                 style: TextStyle(
                   color: Colors.white,
@@ -219,16 +228,16 @@ class _LoginState extends State<Login> {
                   fontSize: 24,
                 ),
               ),
-              Text(
-                "Track every coin",
+              const Text(
+                "Track every shilling",
                 style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
               ),
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
               Container(
                 decoration: BoxDecoration(
-                  color: Color(0xFF1A2035),
+                  color: const Color(0xFF1A2035),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Color(0XFF2A3150)),
+                  border: Border.all(color: const Color(0XFF2A3150)),
                 ),
                 child: Row(
                   children: [
@@ -236,10 +245,10 @@ class _LoginState extends State<Login> {
                       child: GestureDetector(
                         onTap: () => setState(() => isLogin = true),
                         child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
                             color: isLogin
-                                ? Color(0xFF378ADD)
+                                ? const Color(0xFF378ADD)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -249,7 +258,7 @@ class _LoginState extends State<Login> {
                               style: TextStyle(
                                 color: isLogin
                                     ? Colors.white
-                                    : Color(0xFF6B7280),
+                                    : const Color(0xFF6B7280),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -261,10 +270,10 @@ class _LoginState extends State<Login> {
                       child: GestureDetector(
                         onTap: () => setState(() => isLogin = false),
                         child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
                             color: !isLogin
-                                ? Color(0xFF378ADD)
+                                ? const Color(0xFF378ADD)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -274,7 +283,7 @@ class _LoginState extends State<Login> {
                               style: TextStyle(
                                 color: !isLogin
                                     ? Colors.white
-                                    : Color(0xFF378ADD),
+                                    : const Color(0xFF6B7280),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -285,12 +294,12 @@ class _LoginState extends State<Login> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               if (!isLogin)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       "USERNAME",
                       style: TextStyle(
                         color: Color(0xFF6B7280),
@@ -299,7 +308,7 @@ class _LoginState extends State<Login> {
                         letterSpacing: 1.2,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     FormField(
                       theController: _usernameController,
                       hints: "Username",
@@ -308,11 +317,11 @@ class _LoginState extends State<Login> {
                     ),
                   ],
                 ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     "EMAIL",
                     style: TextStyle(
                       color: Color(0XFF6B7280),
@@ -321,18 +330,18 @@ class _LoginState extends State<Login> {
                       letterSpacing: 1.2,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   FormField(
                     theController: _emailController,
                     hints: 'Email',
                     myIcons: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         "PASSWORD",
                         style: TextStyle(
                           color: Color(0XFF6B7280),
@@ -341,7 +350,7 @@ class _LoginState extends State<Login> {
                           letterSpacing: 1.2,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       FormField(
                         theController: _passwordController,
                         hints: "*********",
@@ -369,7 +378,7 @@ class _LoginState extends State<Login> {
                       ],
                     ],
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     height: 55,
@@ -384,10 +393,9 @@ class _LoginState extends State<Login> {
                         ),
                       ),
                       child: isLoading
-                          ? SizedBox(
+                          ? const SizedBox(
                               height: 24,
                               width: 24,
-
                               child: CircularProgressIndicator(
                                 color: Colors.white,
                                 strokeWidth: 2.5,
@@ -395,7 +403,7 @@ class _LoginState extends State<Login> {
                             )
                           : Text(
                               isLogin ? "Sign in" : "Create Account",
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -412,7 +420,7 @@ class _LoginState extends State<Login> {
                           "or continue with",
                           style: TextStyle(
                             color: Colors.grey.shade600,
-                            fontSize: 20,
+                            fontSize: 16,
                           ),
                         ),
                       ),
@@ -428,19 +436,25 @@ class _LoginState extends State<Login> {
                         try {
                           final GoogleSignInAccount googleUser =
                               await GoogleSignIn.instance.authenticate();
+                          
                           final GoogleSignInAuthentication googleAuth =
                               googleUser.authentication;
-                          final AuthCredential credential =
-                              GoogleAuthProvider.credential(
-                                idToken: googleAuth.idToken,
-                              );
+                          
+                          final AuthCredential credential = GoogleAuthProvider.credential(
+                            idToken: googleAuth.idToken,
+                          );
                           final userCred = await _auth.signInWithCredential(
                             credential,
                           );
                           final bool isNewUser =
                               userCred.additionalUserInfo?.isNewUser ?? false;
+                          
                           if (!context.mounted) return;
+                          
                           if (isNewUser) {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool('is_first_launch', true);
+                            
                             FocusManager.instance.primaryFocus?.unfocus();
                             Navigator.pushNamedAndRemoveUntil(
                               context,
@@ -455,6 +469,7 @@ class _LoginState extends State<Login> {
                             );
                           }
                         } catch (e) {
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text("Google sign in failed: $e"),
@@ -463,8 +478,8 @@ class _LoginState extends State<Login> {
                         }
                       },
                       icon: Image.asset('images/noback.png', height: 20),
-                      label: Text(
-                        "Continue with google",
+                      label: const Text(
+                        "Continue with Google",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -472,9 +487,9 @@ class _LoginState extends State<Login> {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Color(0XFF2A3150)),
+                        side: const BorderSide(color: Color(0XFF2A3150)),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadiusGeometry.circular(12),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
@@ -569,38 +584,38 @@ class FormField extends StatelessWidget {
           obscureText: obscure,
           keyboardType: keyboardType,
           controller: theController,
-          style: TextStyle(color: Colors.white),
+          style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             filled: true,
-            fillColor: Color(0xFF1A2035),
+            fillColor: const Color(0xFF1A2035),
             hintText: hints,
-            prefixIcon: Icon(myIcons),
+            prefixIcon: Icon(myIcons, color: const Color(0xFF6B7280)),
             suffixIcon: onToggleObscure == null
                 ? null
                 : IconButton(
                     onPressed: onToggleObscure,
                     icon: Icon(
                       obscure ? Icons.visibility_off : Icons.visibility,
-                      color: Color(0XFF4B5563),
+                      color: const Color(0XFF4B5563),
                     ),
                   ),
-            hintStyle: TextStyle(color: Color(0XFF4B5563)),
-            contentPadding: EdgeInsets.symmetric(vertical: 16),
+            hintStyle: const TextStyle(color: Color(0XFF4B5563)),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF378ADD), width: 1.5),
+              borderSide: const BorderSide(color: Color(0xFF378ADD), width: 1.5),
               borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
         if (helperText != null) ...[
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             helperText!,
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
           ),
         ],
       ],

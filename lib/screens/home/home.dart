@@ -16,16 +16,110 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:budget_buddy/services/budget_service.dart';
 import 'package:budget_buddy/utils/budget_utils.dart';
 import 'package:budget_buddy/widgets/budget_widgets.dart';
+import 'package:budget_buddy/services/tutorial_service.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   static const String id = "home_screen";
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  // State is public so MainWrapper can call triggerTutorial() via GlobalKey
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
+  final GlobalKey _balanceKey = GlobalKey();
+  final GlobalKey _budgetKey = GlobalKey();
+  final GlobalKey _analyticsKey = GlobalKey();
+  final GlobalKey _topUpKey = GlobalKey();
+  final GlobalKey _expenseKey = GlobalKey();
+  bool _hasShownTutorial = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check and show tutorial after the widget is fully built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowTutorial();
+    });
+  }
+
+  Future<void> _checkAndShowTutorial() async {
+    if (_hasShownTutorial) return;
+
+    // Get arguments from both the route and the widget
+    final args = ModalRoute.of(context)?.settings.arguments as Map?;
+    final shouldShowTutorial = args?['showTutorial'] == true;
+
+    debugPrint(
+      "HomeScreen: Checking tutorial - shouldShow = $shouldShowTutorial, args = $args",
+    );
+
+    if (shouldShowTutorial) {
+      _hasShownTutorial = true;
+      // Longer delay to ensure all widgets are rendered and have their keys attached
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (mounted) {
+        debugPrint("HomeScreen: Calling _showTutorial");
+        _showTutorial();
+      }
+    }
+  }
+
+  // Called by MainWrapper after it confirms the screen is fully rendered
+  void triggerTutorial() {
+    if (!_hasShownTutorial) {
+      _hasShownTutorial = true;
+      _showTutorial();
+    }
+  }
+
+  void _showTutorial() {
+    if (!mounted) {
+      debugPrint("HomeScreen: _showTutorial called but not mounted");
+      return;
+    }
+
+    debugPrint("HomeScreen: Creating tutorial targets");
+    final targets = TutorialService.createHomeTargets(
+      balanceKey: _balanceKey,
+      budgetKey: _budgetKey,
+      analyticsKey: _analyticsKey,
+      topUpKey: _topUpKey,
+      expenseKey: _expenseKey,
+    );
+
+    if (targets.isEmpty) {
+      debugPrint("Tutorial Error: No targets found");
+      return;
+    }
+
+    debugPrint("HomeScreen: Showing tutorial with ${targets.length} targets");
+    TutorialCoachMark(
+      targets: targets,
+      colorShadow: const Color(0xFF0F1117),
+      textSkip: "SKIP",
+      paddingFocus: 10,
+      opacityShadow: 0.8,
+      onFinish: () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('tutorial_shown', true);
+        await prefs.setBool('is_first_launch', false);
+        debugPrint("Tutorial Finished and flags saved");
+      },
+      onSkip: () {
+        SharedPreferences.getInstance().then((prefs) {
+          prefs.setBool('tutorial_shown', true);
+          prefs.setBool('is_first_launch', false);
+        });
+        debugPrint("Tutorial Skipped and flags saved");
+        return true;
+      },
+    ).show(context: context);
+  }
+
   String _getGreeting() {
     var hour = DateTime.now().hour;
     if (hour < 12) {
@@ -47,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'budget_buddy',
     cache: false,
   );
+
   Future<void> _uploadImage(File imageFile) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -162,6 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final String displayName =
         userName?.displayName ?? userName?.email?.split('@')[0] ?? "Buddy";
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
@@ -241,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               StreamBuilder<DocumentSnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('wallet')
@@ -249,7 +345,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator(color: Color(0XFF378ADD));
+                    return const CircularProgressIndicator(
+                      color: Color(0XFF378ADD),
+                    );
                   }
                   final data = snapshot.data?.data() as Map<String, dynamic>?;
                   final expenses = (data?['total_expense'] ?? 0.0).toDouble();
@@ -257,9 +355,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   final currencySymbol =
                       (data?['currency'] as String?) ?? defaultCurrencySymbol;
                   return Container(
-                    margin: EdgeInsets.symmetric(horizontal: 16),
+                    key: _balanceKey,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
                     width: double.infinity,
-                    padding: EdgeInsets.all(20.0),
+                    padding: const EdgeInsets.all(20.0),
                     decoration: BoxDecoration(
                       color: surfaceColor,
                       borderRadius: BorderRadius.circular(20.0),
@@ -277,7 +376,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           formatCurrency(currencySymbol, balance),
                           style: TextStyle(
@@ -289,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 : Colors.greenAccent,
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -297,10 +396,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Stats(
                                 label: "Wallet",
                                 amount: formatCurrency(currencySymbol, balance),
-                                dotColor: Color(0xFF1D9E75),
+                                dotColor: const Color(0xFF1D9E75),
                               ),
                             ),
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Stats(
                                 label: "Expenses",
@@ -308,7 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   currencySymbol,
                                   expenses,
                                 ),
-                                dotColor: Color(0xFFD85A30),
+                                dotColor: const Color(0xFFD85A30),
                               ),
                             ),
                           ],
@@ -318,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
@@ -349,10 +448,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 16),
               Padding(
+                key: _budgetKey,
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: HomeBudgetPreview(),
+                child: const HomeBudgetPreview(),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -386,8 +486,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               Center(
+                key: _analyticsKey,
                 child: GestureDetector(
                   onTap: () {
                     Navigator.pushNamed(context, StatsPage.id);
@@ -405,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -445,7 +546,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   Container(
-                    padding: EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: TransactionsStreams(limit: 5),
                   ),
                 ],
@@ -460,6 +561,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Expanded(
               child: ElevatedButton.icon(
+                key: _topUpKey,
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
@@ -487,6 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: ElevatedButton.icon(
+                key: _expenseKey,
                 onPressed: () =>
                     Navigator.pushNamed(context, AddTransaction.id),
                 icon: const Icon(Icons.arrow_upward, size: 18),

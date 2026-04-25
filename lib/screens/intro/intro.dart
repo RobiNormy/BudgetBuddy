@@ -65,7 +65,12 @@ class _IntroScreenState extends State<IntroScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
-                  onPressed: () => _controller.jumpTo(2),
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('hasSeen', true);
+                    if (!context.mounted) return;
+                    Navigator.pushReplacementNamed(context, 'auth_gate');
+                  },
                   child: Text(
                     "SKIP",
                     style: TextStyle(
@@ -95,7 +100,7 @@ class _IntroScreenState extends State<IntroScreen> {
                         onPressed: () async {
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setBool('hasSeen', true);
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           Navigator.pushReplacementNamed(context, 'auth_gate');
                         },
                         child: const Text(

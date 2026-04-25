@@ -7,9 +7,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:budget_buddy/models/all_transactions.dart';
 import 'package:budget_buddy/screens/profile2/profile2.dart';
 import 'package:budget_buddy/screens/stats_chats/stats_chats.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final _wallet = FirebaseFirestore.instance;
-final String userId = FirebaseAuth.instance.currentUser!.uid;
+
+// Getter to safely get current user ID
+String get userId => FirebaseAuth.instance.currentUser?.uid ?? '';
 
 class MyWallet extends StatefulWidget {
   const MyWallet({super.key});
@@ -23,8 +26,19 @@ class _MyWalletState extends State<MyWallet> {
   final amountController = TextEditingController();
   String _selectedCurrency = defaultCurrencySymbol;
   bool _loading = false;
+
   Future<void> createWallet() async {
     if (amountController.text.isEmpty) return;
+
+    if (userId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error: User not authenticated")),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _loading = true;
     });
@@ -34,16 +48,19 @@ class _MyWalletState extends State<MyWallet> {
         'total_expense': 0.0,
         'currency': _selectedCurrency,
       });
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_first_launch', false);
+      await prefs.setBool('tutorial_shown', false);
+
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context,
           MainWrapper.id,
           (route) => false,
+          arguments: {'showTutorial': true},
         );
       }
-      setState(() {
-        _loading = false;
-      });
     } catch (e) {
       debugPrint("Firebase Error $e");
     } finally {
@@ -205,7 +222,6 @@ class _MyWalletState extends State<MyWallet> {
             Navigator.pushNamed(context, ProfilePage2.id);
           }
         },
-
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
@@ -302,8 +318,6 @@ class WalletStream extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
       stream: _wallet.collection("wallet").doc(userId).snapshots(),
-
-      // .map((doc)=>(doc.data()?['balance']??0.0).toDouble()),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Scaffold(
@@ -412,7 +426,6 @@ class _TopUpSheetState extends State<TopUpSheet> {
               style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
             ),
             const SizedBox(height: 24),
-
             const Text(
               "AMOUNT",
               style: TextStyle(
