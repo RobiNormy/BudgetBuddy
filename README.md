@@ -19,6 +19,12 @@ A personal finance management app built with Flutter to help you track income, e
 - Flutter SDK (3.x or later)
 - Firebase project configured
 - Android SDK / Xcode (for iOS/macOS builds)
+## 📥 Download & Install
+You can download the latest version of BudgetBuddy from the [Releases Page](https://github.com/RobinNormy/BudgetBuddy/releases).
+
+**Which version should I choose?**
+* **Modern Phones:** Download `BudgetBuddy_Modern.apk` (ARM64).
+* **Older/Budget Phones:** Download `BudgetBuddy_Legacy.apk` (ARMv7).
 
 ### Installation
 
