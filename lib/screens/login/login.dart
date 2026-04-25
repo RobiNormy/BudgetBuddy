@@ -1,4 +1,5 @@
 import 'package:budget_buddy/screens/all_screens.dart';
+import 'package:budget_buddy/screens/home/home.dart';
 import 'package:budget_buddy/screens/wallet/wallet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -126,17 +127,24 @@ class _LoginState extends State<Login> {
           return;
         }
         final userCredential = await _auth.createUserWithEmailAndPassword(
-          email: userEmail,
-          password: userPassword,
-        );
-        await userCredential.user?.updateDisplayName(username);
-        if (!mounted) return;
-        FocusManager.instance.primaryFocus?.unfocus();
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          MyWallet.id,
-          (route) => false,
-        );
+            email: userEmail,
+            password: userPassword,
+          );
+          await userCredential.user?.updateDisplayName(username);
+          if (!mounted) return;
+          FocusManager.instance.primaryFocus?.unfocus();
+          if (userCredential.additionalUserInfo?.isNewUser == true){
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              MyWallet.id,
+                  (route) => false,
+            );
+          }else {
+            Navigator.pushNamedAndRemoveUntil(context, HomeScreen.id, (route)=>false);
+        }
+
+
+
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
