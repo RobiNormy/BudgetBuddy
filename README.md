@@ -1,3 +1,4 @@
+![GitHub Release](https://img.shields.io/github/v/release/RobinNormy/BudgetBuddy?style=for-the-badge&color=green)
 # BudgetBuddy
 
 A personal finance management app built with Flutter to help you track income, expenses, and budgets with beautiful visual charts and analytics.
