@@ -30,12 +30,12 @@ class _AuthGateState extends State<AuthGate> {
 
     if (user != null) {
       try {
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
+        final walletDoc = await FirebaseFirestore.instance
+            .collection('wallet')
             .doc(user.uid)
             .get();
 
-        if (!userDoc.exists) {
+        if (!walletDoc.exists) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('hasSeen', false);
 
@@ -44,17 +44,6 @@ class _AuthGateState extends State<AuthGate> {
             _isLoading = false;
           });
         } else {
-          final userData = userDoc.data();
-          if (userData == null ||
-              !userData.containsKey('walletCreated') ||
-              userData['walletCreated'] != true) {
-            setState(() {
-              _destination = 'wallet';
-              _isLoading = false;
-            });
-            return;
-          }
-
           final prefs = await SharedPreferences.getInstance();
           final hasSeenIntro = prefs.getBool('hasSeen') ?? false;
 

@@ -48,6 +48,7 @@ class _MyWalletState extends State<MyWallet> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_first_launch', false);
       await prefs.setBool('tutorial_shown', false);
+      await prefs.setBool('hasSeen', true);
 
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(
