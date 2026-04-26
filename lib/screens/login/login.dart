@@ -1,5 +1,4 @@
-import 'package:budget_buddy/screens/all_screens.dart';
-import 'package:budget_buddy/screens/wallet/wallet.dart';
+import 'package:budget_buddy/services/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -99,10 +98,10 @@ class _LoginState extends State<Login> {
         String userEmail = _emailController.text.trim();
         String userPassword = _passwordController.text;
         if (userEmail.isEmpty || userPassword.isEmpty) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Please enter email and password"))
-           );
-           return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Please enter email and password")),
+          );
+          return;
         }
         await _auth.signInWithEmailAndPassword(
           email: userEmail,
@@ -110,21 +109,22 @@ class _LoginState extends State<Login> {
         );
         if (!mounted) return;
         FocusManager.instance.primaryFocus?.unfocus();
+        // Go through AuthGate to check if user needs onboarding
         Navigator.pushNamedAndRemoveUntil(
           context,
-          MainWrapper.id,
+          AuthGate.id,
           (route) => false,
         );
       } else {
         String userEmail = _emailController.text.trim();
         String userPassword = _passwordController.text;
         String username = _usernameController.text;
-        
+
         if (userEmail.isEmpty || userPassword.isEmpty || username.isEmpty) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Please fill in all fields"))
-           );
-           return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Please fill in all fields")),
+          );
+          return;
         }
 
         if (!_isPasswordValid(userPassword)) {
@@ -142,22 +142,21 @@ class _LoginState extends State<Login> {
           return;
         }
         final userCredential = await _auth.createUserWithEmailAndPassword(
-            email: userEmail,
-            password: userPassword,
-          );
-          await userCredential.user?.updateDisplayName(username);
-          
-          // Mark this as the first launch for the tutorial/wallet setup
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('is_first_launch', true);
+          email: userEmail,
+          password: userPassword,
+        );
+        await userCredential.user?.updateDisplayName(username);
 
-          if (!mounted) return;
-          FocusManager.instance.primaryFocus?.unfocus();
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            MyWallet.id,
-            (route) => false,
-          );
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('is_first_launch', true);
+
+        if (!mounted) return;
+        FocusManager.instance.primaryFocus?.unfocus();
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AuthGate.id,
+          (route) => false,
+        );
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -177,7 +176,10 @@ class _LoginState extends State<Login> {
         SnackBar(
           content: Text(
             message,
-            style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       );
@@ -436,35 +438,36 @@ class _LoginState extends State<Login> {
                         try {
                           final GoogleSignInAccount googleUser =
                               await GoogleSignIn.instance.authenticate();
-                          
+
                           final GoogleSignInAuthentication googleAuth =
                               googleUser.authentication;
-                          
-                          final AuthCredential credential = GoogleAuthProvider.credential(
-                            idToken: googleAuth.idToken,
-                          );
+
+                          final AuthCredential credential =
+                              GoogleAuthProvider.credential(
+                                idToken: googleAuth.idToken,
+                              );
                           final userCred = await _auth.signInWithCredential(
                             credential,
                           );
                           final bool isNewUser =
                               userCred.additionalUserInfo?.isNewUser ?? false;
-                          
+
                           if (!context.mounted) return;
-                          
+
                           if (isNewUser) {
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.setBool('is_first_launch', true);
-                            
+
                             FocusManager.instance.primaryFocus?.unfocus();
                             Navigator.pushNamedAndRemoveUntil(
                               context,
-                              MyWallet.id,
+                              AuthGate.id,
                               (route) => false,
                             );
                           } else {
                             Navigator.pushNamedAndRemoveUntil(
                               context,
-                              MainWrapper.id,
+                              AuthGate.id,
                               (route) => false,
                             );
                           }
@@ -606,7 +609,10 @@ class FormField extends StatelessWidget {
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFF378ADD), width: 1.5),
+              borderSide: const BorderSide(
+                color: Color(0xFF378ADD),
+                width: 1.5,
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
           ),
