@@ -7,6 +7,7 @@ import 'package:budget_buddy/screens/input/input.dart';
 import 'package:budget_buddy/screens/intro/intro.dart';
 import 'package:budget_buddy/screens/login/login.dart';
 import 'package:budget_buddy/screens/profile2/profile2.dart';
+import 'package:budget_buddy/screens/splash/splash_screen.dart';
 import 'package:budget_buddy/screens/wallet/wallet.dart';
 import 'package:budget_buddy/theme/theme_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -39,13 +40,14 @@ class BudgetBuddy extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return MaterialApp(
-      home: hasSeen ? AuthGate() : IntroScreen(),
+      home: hasSeen ? SplashScreen() : IntroScreen(),
       debugShowCheckedModeBanner: false,
       themeMode: themeProvider.themeMode,
       theme: AppThemes.lightTheme,
       darkTheme: AppThemes.darkTheme,
       routes: {
         IntroScreen.id: (context) => IntroScreen(),
+        SplashScreen.id: (context) => SplashScreen(),
         AuthGate.id: (context) => AuthGate(),
         HomeScreen.id: (context) => HomeScreen(),
         AddTransaction.id: (context) => AddTransaction(),

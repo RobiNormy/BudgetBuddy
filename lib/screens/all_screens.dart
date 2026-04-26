@@ -3,6 +3,7 @@ import 'package:budget_buddy/models/all_transactions.dart';
 import 'package:budget_buddy/screens/home/home.dart';
 import 'package:budget_buddy/screens/stats_chats/stats_chats.dart';
 import 'package:budget_buddy/screens/profile2/profile2.dart';
+import 'package:budget_buddy/screens/splash/splash_screen.dart';
 
 class MainWrapper extends StatefulWidget {
   const MainWrapper({super.key});
