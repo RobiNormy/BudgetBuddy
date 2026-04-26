@@ -4,12 +4,11 @@ import 'package:budget_buddy/utils/currency_utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:budget_buddy/models/all_transactions.dart';
-import 'package:budget_buddy/screens/profile2/profile2.dart';
-import 'package:budget_buddy/screens/stats_chats/stats_chats.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final _wallet = FirebaseFirestore.instance;
-final String userId = FirebaseAuth.instance.currentUser!.uid;
+
+String get userId => FirebaseAuth.instance.currentUser?.uid ?? '';
 
 class MyWallet extends StatefulWidget {
   const MyWallet({super.key});
@@ -23,8 +22,19 @@ class _MyWalletState extends State<MyWallet> {
   final amountController = TextEditingController();
   String _selectedCurrency = defaultCurrencySymbol;
   bool _loading = false;
+
   Future<void> createWallet() async {
     if (amountController.text.isEmpty) return;
+
+    if (userId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error: User not authenticated")),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _loading = true;
     });
@@ -34,16 +44,19 @@ class _MyWalletState extends State<MyWallet> {
         'total_expense': 0.0,
         'currency': _selectedCurrency,
       });
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_first_launch', false);
+      await prefs.setBool('tutorial_shown', false);
+
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context,
           MainWrapper.id,
           (route) => false,
+          arguments: {'showTutorial': true},
         );
       }
-      setState(() {
-        _loading = false;
-      });
     } catch (e) {
       debugPrint("Firebase Error $e");
     } finally {
@@ -187,47 +200,6 @@ class _MyWalletState extends State<MyWallet> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        selectedItemColor: Color(0XFF578ADD),
-        unselectedItemColor: Color(0XFF4B5563),
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-        onTap: (int index) {
-          if (index == 1) {
-            Navigator.pushNamed(context, AllTransactions.id);
-          }
-          if (index == 2) {
-            Navigator.pushNamed(context, StatsPage.id);
-          }
-          if (index == 3) {
-            Navigator.pushNamed(context, ProfilePage2.id);
-          }
-        },
-
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_outlined),
-            activeIcon: Icon(Icons.receipt),
-            label: "Transactions",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: "Stats",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            activeIcon: Icon(Icons.person),
-            label: "Profile",
-          ),
-        ],
       ),
     );
   }
