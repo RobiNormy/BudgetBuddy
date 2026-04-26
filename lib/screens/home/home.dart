@@ -25,7 +25,6 @@ class HomeScreen extends StatefulWidget {
   static const String id = "home_screen";
 
   @override
-  // State is public so MainWrapper can call triggerTutorial() via GlobalKey
   HomeScreenState createState() => HomeScreenState();
 }
 
@@ -40,7 +39,6 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Check and show tutorial after the widget is fully built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowTutorial();
     });
@@ -49,7 +47,6 @@ class HomeScreenState extends State<HomeScreen> {
   Future<void> _checkAndShowTutorial() async {
     if (_hasShownTutorial) return;
 
-    // Get arguments from both the route and the widget
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
     final shouldShowTutorial = args?['showTutorial'] == true;
 
@@ -59,7 +56,6 @@ class HomeScreenState extends State<HomeScreen> {
 
     if (shouldShowTutorial) {
       _hasShownTutorial = true;
-      // Longer delay to ensure all widgets are rendered and have their keys attached
       await Future.delayed(const Duration(milliseconds: 800));
       if (mounted) {
         debugPrint("HomeScreen: Calling _showTutorial");
@@ -68,7 +64,6 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Called by MainWrapper after it confirms the screen is fully rendered
   void triggerTutorial() {
     if (!_hasShownTutorial) {
       _hasShownTutorial = true;

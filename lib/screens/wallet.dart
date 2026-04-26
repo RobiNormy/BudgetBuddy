@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 final _wallet = FirebaseFirestore.instance;
 
-// Getter to safely get current user ID
 String get userId => FirebaseAuth.instance.currentUser?.uid ?? '';
 
 class MyWallet extends StatefulWidget {
