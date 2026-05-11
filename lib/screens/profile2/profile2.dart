@@ -1,3 +1,5 @@
+import 'package:budget_buddy/screens/currency.dart';
+import 'package:budget_buddy/utils/convertor.dart';
 import 'package:budget_buddy/widgets/profile_reusablecards.dart';
 import 'package:budget_buddy/utils/currency_utils.dart';
 import 'package:budget_buddy/screens/login/login.dart';
@@ -125,7 +127,6 @@ class ProfilePage2 extends StatelessWidget {
                       (categoryTotals[category] ?? 0) + amount;
                 }
               }
-
               String topCategory = "None";
               if (categoryTotals.values.any((value) => value > 0)) {
                 topCategory = categoryTotals.entries
@@ -133,7 +134,6 @@ class ProfilePage2 extends StatelessWidget {
                     .key;
                 topCategory = displayCategory(topCategory);
               }
-
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -277,6 +277,25 @@ class ProfilePage2 extends StatelessWidget {
                                   ),
                                 ],
                               ),
+                            ),
+                          ),
+                          const MyDivider(),
+                          InkWell(
+                            onTap: () => showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                              ),
+                              builder: (_) => const CurrencyConvertor(),
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            child: StatRow(
+                              icon: Icons.currency_exchange,
+                              iconColor: const Color(0xFF378ADD),
+                              iconBg: const Color(0xFF1A2535),
+                              label: "Convert",
+                              value: currencySymbol,
                             ),
                           ),
                           const MyDivider(),
@@ -607,6 +626,19 @@ void _confirmLogout(BuildContext context) {
   );
 }
 
+void _showConverter(BuildContext context,
+    {required Null Function(BuildContext context) builder}) {
+  showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0),
+        ),
+      ),
+      builder: (builder)=>Convertor()
+  );
+}
+
 void _showCurrencyPicker(
   BuildContext context,
   String userId,
@@ -738,7 +770,6 @@ void _confirmDeleteAccount(BuildContext context) {
             _showInfoSnackBar(dialogContext, 'Type DELETE to confirm.');
             return;
           }
-
           if (usesPassword && passwordController.text.isEmpty) {
             _showInfoSnackBar(
               dialogContext,
@@ -746,7 +777,6 @@ void _confirmDeleteAccount(BuildContext context) {
             );
             return;
           }
-
           setDialogState(() {
             deleting = true;
           });
@@ -761,7 +791,6 @@ void _confirmDeleteAccount(BuildContext context) {
               );
               await user.reauthenticateWithCredential(credential);
             }
-
             await _deleteWalletData(userId);
             await user.delete();
             await FirebaseAuth.instance.signOut();
@@ -804,7 +833,6 @@ void _confirmDeleteAccount(BuildContext context) {
             }
           }
         }
-
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
           shape: RoundedRectangleBorder(
@@ -888,7 +916,6 @@ void _showChangeEmailDialog(BuildContext context) {
   final newEmailController = TextEditingController(text: user.email ?? "");
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final titleColor = isDark ? const Color(0xFFF9FAFB) : Colors.black87;
-
   showDialog(
     context: context,
     builder: (_) => AlertDialog(

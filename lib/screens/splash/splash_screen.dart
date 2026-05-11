@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:budget_buddy/services/auth.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,11 +15,15 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   bool _isConnected = true;
   bool _isChecking = true;
-
+  String _version = "";
   @override
   void initState() {
     super.initState();
-    _checkConnectivityAndNavigate();
+    _initializeApp();
+  }
+  Future<void> _initializeApp()async{
+    await _loadVersion();
+    await _checkConnectivityAndNavigate();
   }
 
   Future<void> _checkConnectivityAndNavigate() async {
@@ -36,6 +41,13 @@ class _SplashScreenState extends State<SplashScreen> {
         _navigateToAuth();
       }
     }
+  }
+
+  Future <void> _loadVersion()async{
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _version = "v ${packageInfo.version}";
+    });
   }
 
   void _navigateToAuth() {
@@ -93,8 +105,6 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-
-              // App Name
               Text(
                 'Budget Buddy',
                 style: TextStyle(
@@ -104,7 +114,6 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-
               Text(
                 'Your Personal Finance Manager',
                 style: TextStyle(
@@ -115,16 +124,27 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ),
               const SizedBox(height: 48),
-
-              Text(
-                'Version 1.0.0',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+              if (_version.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(50),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    _version,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.1,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                 ),
-              ),
 
               if (!_isConnected && !_isChecking) ...[
                 const SizedBox(height: 32),

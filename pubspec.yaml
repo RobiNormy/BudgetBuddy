@@ -2,7 +2,7 @@ name: budget_buddy
 description: "A personal finance management app to track income, expenses, and budgets with visual charts and analytics."
 
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ^3.11.0
@@ -25,6 +25,11 @@ dependencies:
   url_launcher: ^6.3.1
   connectivity_plus: ^6.1.1
   tutorial_coach_mark: ^1.3.3
+  liquid_glass_bar: ^0.1.0
+  liquid_glass_renderer: ^0.2.0-dev.4
+  flutter_debouncer: ^2.1.1
+  flutter_dotenv: ^6.0.1
+  package_info_plus: ^10.1.0
 
 
 
@@ -40,6 +45,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - images/start.png
     - images/nobg.png
     - images/intro1.png

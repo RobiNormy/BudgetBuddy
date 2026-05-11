@@ -551,59 +551,128 @@ class HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                key: _topUpKey,
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => TopUpSheet(),
-                  );
-                },
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text(
-                  "Top Up",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                  backgroundColor: const Color(0xFF1D9E75),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+        top: false,
+        minimum: EdgeInsets.zero,
+        child: Container(
+          color: theme.scaffoldBackgroundColor,
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+          child: Transform.translate(
+            offset: const Offset(0, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _HomeActionButton(
+                    key: _topUpKey,
+                    label: "Top Up",
+                    icon: Icons.add_rounded,
+                    backgroundColor: const Color(0xFF1D9E75),
+                    highlightColor: const Color(0xFF48C89A),
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => const TopUpSheet(),
+                      );
+                    },
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                key: _expenseKey,
-                onPressed: () =>
-                    Navigator.pushNamed(context, AddTransaction.id),
-                icon: const Icon(Icons.arrow_upward, size: 18),
-                label: const Text(
-                  "Expense",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                  backgroundColor: Colors.blue.shade600,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _HomeActionButton(
+                    key: _expenseKey,
+                    label: "Expense",
+                    icon: Icons.north_east_rounded,
+                    backgroundColor: const Color(0xFF378ADD),
+                    highlightColor: const Color(0xFF6AA9F3),
+                    onTap: () =>
+                        Navigator.pushNamed(context, AddTransaction.id),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeActionButton extends StatelessWidget {
+  const _HomeActionButton({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.backgroundColor,
+    required this.highlightColor,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color backgroundColor;
+  final Color highlightColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          height: 58,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [highlightColor, backgroundColor],
+            ),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: backgroundColor.withValues(alpha: 0.24),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+                spreadRadius: -10,
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -319,10 +319,18 @@ class _TopUpSheetState extends State<TopUpSheet> {
   bool _loading = false;
 
   Future<void> _topUp() async {
-    if (_amountController.text.isEmpty) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final amount = double.tryParse(_amountController.text.trim());
+
+    if (amount == null || amount <= 0) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text("Enter a valid amount to top up")),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
     try {
-      final amount = double.parse(_amountController.text);
       await _wallet.collection('wallet').doc(userId).collection('topups').add({
         'amount': amount,
         'note': _noteController.text.isEmpty ? 'Top up' : _noteController.text,
@@ -331,8 +339,16 @@ class _TopUpSheetState extends State<TopUpSheet> {
       await _wallet.collection('wallet').doc(userId).set({
         'balance': FieldValue.increment(amount),
       }, SetOptions(merge: true));
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text("Wallet topped up successfully")),
+      );
+      Navigator.of(context).pop(true);
     } catch (e) {
       debugPrint("Error $e");
+      messenger.showSnackBar(
+        const SnackBar(content: Text("Failed to top up wallet")),
+      );
     } finally {
       if (mounted) {
         setState(() {
